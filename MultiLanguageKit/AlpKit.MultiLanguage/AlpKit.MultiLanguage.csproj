@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>AlpKit.MultiLang</PackageId>
+    <Version>1.0.0.0</Version>
+    <Authors>Alper Basda</Authors>
+    <Company>NurayMindTech</Company>
+    <Description>
+      Çok dilli uygulamalar oluşturmaya yarar.
+    </Description>
+    <PackageOutputPath>$(SolutionDir)_NugetPackages</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+
+
+</Project>

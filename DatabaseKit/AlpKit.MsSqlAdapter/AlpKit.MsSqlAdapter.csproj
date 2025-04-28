@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>AlpKit.Mssql</PackageId>
+    <Version>1.0.0.0</Version>
+    <Authors>Alper Basda</Authors>
+    <Company>NurayMindTech</Company>
+    <Description>
+      EF core ve AlpKit.Database kullanarak bir mssql db entegrasyonu gerçekler.
+    </Description>
+    <PackageOutputPath>$(SolutionDir)_NugetPackages</PackageOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AlpKit.Database\AlpKit.Database.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,6 @@
+@AlpKit.Api.Examples_HostAddress = http://localhost:5183
+
+GET {{AlpKit.Api.Examples_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
