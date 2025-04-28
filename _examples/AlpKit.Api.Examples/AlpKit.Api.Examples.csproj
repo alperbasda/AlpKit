@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AlpKit.Caching" Version="1.0.0" />
+    <PackageReference Include="AlpKit.MongoAdapter" Version="1.0.0" />
+    <PackageReference Include="AlpKit.Mssql" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.4" />
   </ItemGroup>
 
