@@ -1,6 +1,17 @@
-@AlpKit.Api.Examples_HostAddress = http://localhost:5183
+@AlpKit.Api.Examples_HostAddress = https://localhost:7086
 
-GET {{AlpKit.Api.Examples_HostAddress}}/weatherforecast/
+GET {{AlpKit.Api.Examples_HostAddress}}/Cache/Read
 Accept: application/json
+
+
+###
+
+POST {{AlpKit.Api.Examples_HostAddress}}/Cache/Write
+Content-Type: application/json
+Accept: application/json
+
+{
+  "text": "Merhaba dünya!"
+}
 
 ###
