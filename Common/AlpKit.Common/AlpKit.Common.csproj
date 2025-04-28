@@ -4,6 +4,15 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageId>AlpKit.Common</PackageId>
+    <Version>1.0.0.0</Version>
+    <Authors>Alper Basda</Authors>
+    <Company>NurayMindTech</Company>
+    <Description>
+      Bazı Paketlerin ortak yapılarını tutar.
+    </Description>
+    <PackageOutputPath>$(SolutionDir)_NugetPackages</PackageOutputPath>
   </PropertyGroup>
 
   <ItemGroup>
