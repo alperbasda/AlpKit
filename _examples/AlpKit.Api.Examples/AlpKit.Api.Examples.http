@@ -1,6 +1,6 @@
 @AlpKit.Api.Examples_HostAddress = https://localhost:7086
 
-GET {{AlpKit.Api.Examples_HostAddress}}/Cache/Read
+GET {{AlpKit.Api.Examples_HostAddress}}/Cache/ExceptionTest
 Accept: application/json
 
 

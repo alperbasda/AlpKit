@@ -1,29 +1,30 @@
-﻿using AlpKit.Api.Examples.Models;
-using AlpKit.Caching.Helpers;
+﻿using AlpKit.Common.Constants;
+using AlpKit.Logging.Loggers;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AlpKit.Api.Examples.Controllers;
 
 [ApiController]
 [Route("[controller]/[action]")]
-public class CacheController(ICacheHelper cacheHelper) : ControllerBase
+public class CacheController(LoggerServiceBase logger) : ControllerBase
 {
-    private const string CacheKey = "test";
     [HttpGet]
-    public async Task<IActionResult> Read()
+    public async Task<IActionResult> ExceptionTest()
     {
-        var data = await cacheHelper.GetAsync<CacheModel>(CacheKey);
-        if(data == null)
-            return NotFound();
 
-        return Ok(data);
+        var ex = new Exception("exception loglaması yapılacak");
+        //Eğer web projesi ise RedirectUrlDataName zorunludur.
+        ex.Data[ExceptionDataConstans.RedirectUrlDataName] = "/";
+        ex.Data[ExceptionDataConstans.LogTypeDataName] = LogType.Error;
+        ex.Data[ExceptionDataConstans.TypeDataName] = "BusinessException";
+        ex.Data[ExceptionDataConstans.StatusCodeDataName] = 500;
+        throw ex;
     }
-    [HttpPost]
-    public async Task<IActionResult> Write(CacheModel model)
+    
+    public async Task<IActionResult> LogText()
     {
-        // 5 dakika boyunca cache'de kalacak. Hiç okuma yapılazsa 5 dakika sonra cache'den silinecek.
-        // Okuma yapılsa bile 2 saat sonra cache'den silinecek.
-        await cacheHelper.SetAsync(CacheKey,model,TimeSpan.FromHours(2),TimeSpan.FromMinutes(5));
-        return Ok(model);
+        logger.Info("Loglama Testi");
+        return Ok("Loglama Testi");
     }
 }
+    
