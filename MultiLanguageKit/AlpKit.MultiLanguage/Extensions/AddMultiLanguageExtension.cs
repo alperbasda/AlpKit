@@ -15,10 +15,10 @@ namespace AlpKit.MultiLanguage.Extensions;
 public static class AddMultiLanguageExtension
 {
     public static Dictionary<string, CultureInfo> ApplicationCultures = [];
-    public static IServiceCollection AddControllersAndMultiLanguage(this IServiceCollection collection, CultureInfo[] cultures)
+    public static IMvcBuilder AddControllersAndMultiLanguage(this IServiceCollection collection, CultureInfo[] cultures)
     {
         ApplicationCultures = cultures.ToDictionary(w => w.TwoLetterISOLanguageName, w => w);
-        collection.AddControllersWithViews()
+        var mvcBuilder = collection.AddControllersWithViews()
                   .AddViewLocalization(LanguageViewLocationExpanderFormat.SubFolder)
                   .AddDataAnnotationsLocalization();
 
@@ -34,7 +34,7 @@ public static class AddMultiLanguageExtension
         collection.AddSingleton<IStringLocalizerFactory, JsonStringLocalizerFactory>();
         collection.AddSingleton<IStringLocalizer, JsonStringLocalizer>();
 
-        return collection;
+        return mvcBuilder;
     }
 }
 

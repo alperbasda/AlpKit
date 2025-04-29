@@ -13,7 +13,7 @@
        "tr-TR": "Lütfen Bekleyin. Yükleniyor...",
        "en-US": "Please Wait. Loading..."
      }
- },
+ }
 ]
 proje seviyesinde route_localization.json bulunmalı. içeriği şu şekilde devam etmeli
 
@@ -44,5 +44,15 @@ app.UseLocalization(cultures);
 
 route mappingler ayarlanmalı
 app.MapDynamicControllerRoute<LocalizedTransformer>("{culture=tr}/{controller=Home}/{action=Index}/{name?}");
+
+_viewImporta şu satılar eklenmeli
+@using Microsoft.AspNetCore.Mvc.Localization
+@using AlpKit.MultiLanguage.Localizer
+@using System.Globalization
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@inject IViewLocalizer Localizer
+
+
 
 eger route_localization.json dosyasında eksik veri var ise sayfa bulunamayabilir.
