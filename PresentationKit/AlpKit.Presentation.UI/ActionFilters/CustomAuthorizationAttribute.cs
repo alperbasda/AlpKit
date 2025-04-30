@@ -40,9 +40,9 @@ public class CustomAuthorizationAttribute : Attribute, IAuthorizationFilter
 
         var handler = new JwtSecurityTokenHandler();
         var token = handler.ReadJwtToken(jwt);
+        if (_scopes.Count == 0)
+            return;
 
-        if (token == null || !_scopes.Any())
-            throwAuthorizationException(authSettings);
         if (!token!.Claims.Where(w => w.Type == "scope").Select(w => w.Value).Any(_scopes.Contains))
             throwAuthorizationException(authSettings);
 
