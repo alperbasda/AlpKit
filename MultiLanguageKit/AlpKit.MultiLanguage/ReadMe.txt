@@ -44,6 +44,9 @@ app.UseLocalization(cultures);
 
 route mappingler ayarlanmalı
 app.MapDynamicControllerRoute<LocalizedTransformer>("{culture=tr}/{controller=Home}/{action=Index}/{name?}");
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 _viewImporta şu satılar eklenmeli
 @using Microsoft.AspNetCore.Mvc.Localization
