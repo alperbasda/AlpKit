@@ -1,6 +1,6 @@
 ﻿namespace AlpKit.Presentation.Api.Models;
 
-public class TokenParameters
+public partial class TokenParameters
 {
     public string[]? ClientIds { get; set; }
     
