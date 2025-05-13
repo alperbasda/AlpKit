@@ -8,3 +8,13 @@ public interface IEntity
     public DateTime? DeletedTime { get; set; }
 }
 
+public interface ITranslationParent<T>
+    where T : IEntity
+{
+    public ICollection<T> Translations { get; set; }
+}
+
+public interface ITranslation
+{
+    public string LanguageCode { get; set; }
+}

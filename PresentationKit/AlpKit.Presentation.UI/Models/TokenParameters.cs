@@ -1,9 +1,9 @@
-﻿namespace AlpKit.Presentation.UI.Models;
+﻿using AlpKit.Presentation.UI.Constants;
 
-public partial class TokenParameters
+namespace AlpKit.Presentation.UI.Models;
+
+public class TokenParameters
 {
-    public string[]? ClientIds { get; set; }
-    
     public Guid UserId { get; set; } = Guid.Empty;
 
     public string UserName { get; set; } = default!;
@@ -16,19 +16,9 @@ public partial class TokenParameters
 
     public string AccessToken { get; set; } = default!;
 
-    public string Currency { get; set; } = "TRY";
-
     public string[] Scopes { get; set; } = default!;
 
     public bool IsSuperUser { get; set; } = false;
 
-    public string DeviceId { get; set; } = "";
-
-    public string DeviceToken { get; set; } = "";
-
-    public string OffsetStr { get; set; } = "00:00:00.00";
-
-    public TimeSpan Offset => TimeSpan.Parse(OffsetStr);
-
+    public Dictionary<string, string> Data { get; set; } = [];
 }
-

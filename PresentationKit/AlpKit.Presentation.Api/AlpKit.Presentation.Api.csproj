@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <PackageId>AlpKit.ApiHelper</PackageId>
-    <Version>1.0.0.6</Version>
+    <Version>1.0.1.5</Version>
     <Authors>Alper Basda</Authors>
     <Company>NurayMindTech</Company>
     <Description>
@@ -22,7 +22,7 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.9.0" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.35.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.9.0" />
   </ItemGroup>
 
   <ItemGroup>

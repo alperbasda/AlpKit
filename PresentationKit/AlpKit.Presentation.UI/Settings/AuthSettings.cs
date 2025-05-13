@@ -13,4 +13,6 @@ public class AuthSettings
     public int RefreshTokenExpiration { get; set; }
 
     public string SecurityKey { get; set; } = default!;
+
+    public List<string> ClientDataKeys { get; set; } = [];
 }

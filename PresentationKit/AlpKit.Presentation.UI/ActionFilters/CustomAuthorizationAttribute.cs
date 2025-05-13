@@ -23,7 +23,7 @@ public class CustomAuthorizationAttribute : Attribute, IAuthorizationFilter
 
     public CustomAuthorizationAttribute()
     {
-        _scopes = new HashSet<string>();
+        _scopes = [];
     }
 
     public void OnAuthorization(AuthorizationFilterContext context)

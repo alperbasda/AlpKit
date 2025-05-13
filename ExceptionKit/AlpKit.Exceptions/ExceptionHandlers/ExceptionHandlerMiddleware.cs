@@ -45,7 +45,7 @@ public class ExceptionHandlerMiddleware
         _exceptionHandler = exceptionHandler;
     }
 
-    public async Task Invoke(HttpContext context, ITempDataProvider tempDataProvider)
+    public async Task Invoke(HttpContext context)
     {
         try
         {
@@ -63,7 +63,8 @@ public class ExceptionHandlerMiddleware
 
         List<LogParameter> logParameters =
         [
-            new LogParameter{Type=context.GetType().Name, Value=exception.ToString()}
+            new LogParameter{Type=context.GetType().Name, Value=exception.ToString()},
+            new LogParameter{Type="StackTrace", Value=exception.StackTrace?.ToString() ?? ""}
         ];
 
 
