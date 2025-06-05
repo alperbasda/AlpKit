@@ -51,10 +51,26 @@ public static class CollectionToDynamicQueryExtension
 
         foreach (string key in allKeys)
         {
-            var maybeExists = key.Contains(".");
+            var maybeExists = key.Contains('.');
             PropertyInfo? propertyInfo = properties.FirstOrDefault((w) => w.Name == key);
+
+
             if (maybeExists)
             {
+                if (key.StartsWith("Translations.", StringComparison.OrdinalIgnoreCase))
+                {
+                    var field = key.Split('.')[1];
+                    var langCode = Thread.CurrentThread.CurrentCulture.Name;
+                    var raw = $"Translations.Any(LanguageId == \"{langCode}\" && {field}.ToLower().Contains(@value))";
+
+                    filter = AddOrCreateFilter(filter, new Filter
+                    {
+                        Field = raw,
+                        Value = nvc[key],
+                        Operator = FilterOperator.Raw
+                    });
+                }
+
                 filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.Equals, nvc[key]!));
                 continue;
             }

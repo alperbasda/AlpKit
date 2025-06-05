@@ -18,7 +18,7 @@ public class FillTokenParameterAttribute : Attribute, IAsyncActionFilter
         var tokenParameters = context.HttpContext.RequestServices.GetService<TokenParameters>()!;
 
         tokenParameters.IpAddress = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? " ";
-        tokenParameters.UserLanguage = context.HttpContext.Request.Headers[WebConstants.Language].ToString() ?? AppConstants.DefaultLanguage;
+        tokenParameters.UserLanguage = context.HttpContext.Request.Cookies[WebConstants.Language]?.ToString() ?? AppConstants.DefaultLanguage;
 
         if (!context.HttpContext.Request.Cookies.TryGetValue(WebConstants.Authorization, out string jwt))
             await next();

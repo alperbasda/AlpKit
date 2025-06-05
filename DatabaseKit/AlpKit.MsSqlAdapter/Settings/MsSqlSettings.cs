@@ -9,4 +9,6 @@ public class MsSqlSettings : IDbSettings
     public string DatabaseName { get; set; } = "Unknown";
     [Required]
     public string ConnectionString { get; set; } = default!;
+    [Required]
+    public bool ApplyMigration { get; set; } = default!;
 }

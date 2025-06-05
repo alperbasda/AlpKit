@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace AlpKit.MultiLanguage.Extensions;
 
@@ -52,6 +53,9 @@ public class RequestLocalizationCookiesMiddleware : IMiddleware
         var matchedCulture = pathSegments.FirstOrDefault(AddMultiLanguageExtension.ApplicationCultures.Keys.Contains) ?? "tr";
 
         CultureInfo.CurrentCulture = AddMultiLanguageExtension.ApplicationCultures[matchedCulture];
+        CultureInfo.DefaultThreadCurrentUICulture = AddMultiLanguageExtension.ApplicationCultures[matchedCulture];
+
+        context.Features.Set<IRequestCultureFeature>(new RequestCultureFeature(new RequestCulture(CultureInfo.CurrentCulture), _provider));
 
         if (_provider != null)
         {

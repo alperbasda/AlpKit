@@ -6,7 +6,6 @@ public class Filter : ICloneable
     public string? Value { get; set; }
     public FilterOperator Operator { get; set; }
     public Logic? Logic { get; set; }
-
     public List<Filter>? Filters { get; set; }
 
     public Filter()

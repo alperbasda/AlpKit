@@ -40,9 +40,9 @@ public class AuthorizationFilter : IEndpointFilter
         var handler = new JwtSecurityTokenHandler();
         var token = handler.ReadJwtToken(jwt);
 
-        if (token == null || !_scopes.Any())
+        if (token == null)
             throwAuthorizationException(authSettings);
-        if (!token!.Claims.Where(w => w.Type == "scope").Select(w => w.Value).Any(_scopes.Contains))
+        if (_scopes.Any() && !token!.Claims.Where(w => w.Type == "scope").Select(w => w.Value).Any(_scopes.Contains))
             throwAuthorizationException(authSettings);
 
         return await next(context);

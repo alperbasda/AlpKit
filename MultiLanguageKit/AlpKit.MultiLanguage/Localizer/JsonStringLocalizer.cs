@@ -34,7 +34,7 @@ namespace AlpKit.MultiLanguage.Localizer
 
         public IEnumerable<LocalizedString> GetAllStrings(bool includeParentCultures)
         {
-            return localization.Where(l => l.LocalizedValue.Keys.Any(lv => lv == CultureInfo.CurrentCulture.Name)).Select(l => new LocalizedString(l.Key, l.LocalizedValue[CultureInfo.CurrentCulture.Name], true));
+            return localization.Where(l => l.LocalizedValue.Keys.Any(lv => lv == CultureInfo.CurrentCulture.Name)).Select(l => new LocalizedString(l.Key, l.LocalizedValue[CultureInfo.DefaultThreadCurrentUICulture.Name], true));
         }
 
         public IStringLocalizer WithCulture(CultureInfo culture)
@@ -47,11 +47,11 @@ namespace AlpKit.MultiLanguage.Localizer
             try
             {
 
-                var query = localization.Where(l => l.LocalizedValue.Keys.Any(lv => lv == CultureInfo.CurrentCulture.Name));
+                var query = localization.Where(l => l.LocalizedValue.Keys.Any(lv => lv == CultureInfo.DefaultThreadCurrentUICulture.Name));
                 var value = query.FirstOrDefault(l => l.Key.ToLower() == name.ToLower());
                 if (value == null)
                     return name;
-                return value.LocalizedValue[CultureInfo.CurrentCulture.Name];
+                return value.LocalizedValue[CultureInfo.DefaultThreadCurrentUICulture.Name];
 
             }
             catch (Exception ex)

@@ -1,10 +1,8 @@
 ﻿using AlpKit.Common.Constants;
 using AlpKit.Exceptions.HttpProblemDetails;
 using AlpKit.Logging.Loggers;
-using Azure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 

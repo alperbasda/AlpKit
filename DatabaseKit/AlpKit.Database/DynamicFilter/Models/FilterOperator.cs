@@ -31,7 +31,9 @@ namespace AlpKit.Database.DynamicFilter.Models
         [Description("Boş")]
         IsEmpty,
         [Description("Boş Değil")]
-        IsNotEmpty
+        IsNotEmpty,
+        [Description("Özel İfade")]
+        Raw
     }
     public enum OrderOperator
     {

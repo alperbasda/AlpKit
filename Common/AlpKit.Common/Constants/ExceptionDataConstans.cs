@@ -16,7 +16,7 @@ public class ExceptionDataConstans
 
 public class AppConstants
 {
-    public const string DefaultLanguage = "tr";
+    public const string DefaultLanguage = "tr-TR";
     public const string Unknown = "unknown";
 }
 

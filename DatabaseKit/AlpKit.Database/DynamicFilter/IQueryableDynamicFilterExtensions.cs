@@ -87,19 +87,25 @@ public static class IQueryableDynamicFilterExtensions
     public static string Transform(Filter filter, IList<Filter> filters)
     {
         int index = filters.IndexOf(filter);
-        string comparison = _operators[filter.Operator];
         StringBuilder where = new();
+
+        if (filter.Operator == FilterOperator.Raw && !string.IsNullOrEmpty(filter.Field))
+        {
+            return filter.Field.Replace("@value", $"@{index}");
+        }
+
+        string comparison = _operators[filter.Operator];
 
         if (!string.IsNullOrEmpty(filter.Value))
         {
             if (filter.Operator == FilterOperator.NotContains)
-                where.Append($"(!np({filter.Field}).{comparison}(@{index.ToString()}))");
+                where.Append($"(!np({filter.Field}).{comparison}(@{index}))");
             else if (comparison is "StartsWith" or "EndsWith" or "Contains")
-                where.Append($"(np({filter.Field}).{comparison}(@{index.ToString()}))");
+                where.Append($"(np({filter.Field}).{comparison}(@{index}))");
             else if (comparison is "ContainsIgnoreCase")
-                where.Append($"(np({filter.Field}).ToLower().Contains(@{index.ToString()}))");
+                where.Append($"(np({filter.Field}).ToLower().Contains(@{index}))");
             else
-                where.Append($"np({filter.Field}) {comparison} @{index.ToString()}");
+                where.Append($"np({filter.Field}) {comparison} @{index}");
         }
         else if (filter.Operator is FilterOperator.IsEmpty or FilterOperator.IsNotEmpty)
         {
@@ -110,9 +116,10 @@ public static class IQueryableDynamicFilterExtensions
         {
             if (string.IsNullOrEmpty(filter.Field))
             {
-                return $"({string.Join(separator: $" {filter.Logic.Value.GetDescription()} ", value: filter.Filters.Select(f => Transform(f, filters)).ToArray())})";
+                return $"({string.Join($" {filter.Logic.Value.GetDescription()} ", filter.Filters.Select(f => Transform(f, filters)))})";
             }
-            return $"{where} {filter.Logic} ({string.Join(separator: $" {filter.Logic.Value.GetDescription()} ", value: filter.Filters.Select(f => Transform(f, filters)).ToArray())})";
+
+            return $"{where} {filter.Logic} ({string.Join($" {filter.Logic.Value.GetDescription()} ", filter.Filters.Select(f => Transform(f, filters)))})";
         }
 
         return where.ToString();

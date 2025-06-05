@@ -12,7 +12,7 @@ public class TokenParameters
 
     public string IpAddress { get; set; } = default!;
 
-    public string UserLanguage { get; set; } = "TR";
+    public string UserLanguage { get; set; } = "tr-TR";
 
     public string AccessToken { get; set; } = default!;
 
