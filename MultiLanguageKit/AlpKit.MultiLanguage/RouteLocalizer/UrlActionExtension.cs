@@ -17,7 +17,6 @@ public static class UrlActionExtension
     public static string LanguageAction(this IUrlHelper helper, string action, string controller, object? values = null)
     {
         var culture = CultureInfo.CurrentCulture.Name;
-        var urlCulture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 
         List<string> routeParams = [];
 
@@ -47,7 +46,7 @@ public static class UrlActionExtension
             translatedAction = "";
         }
 
-        string url = $"/{urlCulture}/{translatedController}/{translatedAction}/{string.Join("/", routeParams)}";
+        string url = $"/{culture}/{translatedController}/{translatedAction}/{string.Join("/", routeParams)}";
         if (url.EndsWith("/"))
         {
             url = url.Substring(0, url.Length - 1);

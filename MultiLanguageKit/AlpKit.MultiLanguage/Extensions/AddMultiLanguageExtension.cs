@@ -2,14 +2,13 @@
 using AlpKit.MultiLanguage.RouteLocalizer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Localization.Routing;
 using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.Localization.Routing;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Options;
 using System.Globalization;
-using System.Text.RegularExpressions;
 
 namespace AlpKit.MultiLanguage.Extensions;
 
@@ -18,7 +17,7 @@ public static class AddMultiLanguageExtension
     public static Dictionary<string, CultureInfo> ApplicationCultures = [];
     public static IMvcBuilder AddControllersAndMultiLanguage(this IServiceCollection collection, CultureInfo[] cultures)
     {
-        ApplicationCultures = cultures.ToDictionary(w => w.TwoLetterISOLanguageName, w => w);
+        ApplicationCultures = cultures.ToDictionary(w => w.Name, w => w, StringComparer.OrdinalIgnoreCase);
         var mvcBuilder = collection.AddControllersWithViews()
                   .AddViewLocalization(LanguageViewLocationExpanderFormat.SubFolder)
                   .AddDataAnnotationsLocalization();
@@ -48,9 +47,9 @@ public class RequestLocalizationCookiesMiddleware : IMiddleware
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
-        var pathSegments = context.Request.Path.Value?.ToLower().Split('/', StringSplitOptions.RemoveEmptyEntries) ?? [];
+        var pathSegments = context.Request.Path.Value?.Split('/', StringSplitOptions.RemoveEmptyEntries) ?? [];
 
-        var matchedCulture = pathSegments.FirstOrDefault(AddMultiLanguageExtension.ApplicationCultures.Keys.Contains) ?? "tr";
+        var matchedCulture = pathSegments.FirstOrDefault(AddMultiLanguageExtension.ApplicationCultures.Keys.Contains) ?? "tr-tr";
 
         CultureInfo.CurrentCulture = AddMultiLanguageExtension.ApplicationCultures[matchedCulture];
         CultureInfo.DefaultThreadCurrentUICulture = AddMultiLanguageExtension.ApplicationCultures[matchedCulture];
