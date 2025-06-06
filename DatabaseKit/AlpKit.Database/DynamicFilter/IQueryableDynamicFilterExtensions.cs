@@ -21,7 +21,8 @@ public static class IQueryableDynamicFilterExtensions
         { FilterOperator.EndsWith, "EndsWith" },
         { FilterOperator.Contains, "Contains" },
         { FilterOperator.ContainsIgnoreCase, "Contains" },
-        { FilterOperator.NotContains, "DoesNotContains" }
+        { FilterOperator.NotContains, "DoesNotContains" },
+        { FilterOperator.Raw, "Raw" }
     };
 
     public static Filter GetNewWay(Filter filter, Logic logic)
@@ -69,9 +70,13 @@ public static class IQueryableDynamicFilterExtensions
         return queryable;
     }
 
-    public static IList<Filter> GetAllFilters(Filter filter)
+    public static IList<Filter> GetAllFilters(Filter? filter)
     {
-        List<Filter> filters = new();
+        if (filter == null)
+        {
+            return new List<Filter>();
+        }
+        List<Filter> filters = [];
         GetFilters(filter, filters);
         return filters;
     }

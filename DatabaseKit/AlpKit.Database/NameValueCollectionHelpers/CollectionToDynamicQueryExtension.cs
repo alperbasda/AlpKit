@@ -1,8 +1,7 @@
 ﻿using AlpKit.Database.DynamicFilter.Models;
+using AlpKit.Database.NameValueCollectionHelpers;
 using System.Collections.Specialized;
 using System.Reflection;
-
-namespace AlpKit.Database.NameValueCollectionHelpers;
 
 public static class CollectionToDynamicQueryExtension
 {
@@ -30,167 +29,154 @@ public static class CollectionToDynamicQueryExtension
 
         if (!string.IsNullOrEmpty(nvc[SortFieldQueryStringName]))
         {
-            sort.Field = nvc[SortFieldQueryStringName]!;
+            var rawField = nvc[SortFieldQueryStringName]!;
             hasSort = true;
+
+            if (rawField.StartsWith("Translations.", StringComparison.OrdinalIgnoreCase))
+            {
+                var fieldName = rawField.Split('.')[1];
+                var langCode = Thread.CurrentThread.CurrentCulture.Name;
+
+                sort.Field = $"Translations.First(LanguageCode == \"{langCode}\").{fieldName}";
+            }
+            else
+            {
+                sort.Field = rawField;
+            }
         }
 
         if (!string.IsNullOrEmpty(nvc[SortOrderOperatorQueryStringName]))
         {
-            sort.OrderOperator = nvc[SortOrderOperatorQueryStringName]!.ToLower() == "asc" ? OrderOperator.Asc : OrderOperator.Desc;
+            sort.OrderOperator = nvc[SortOrderOperatorQueryStringName]!.ToLower() == "asc"
+                ? OrderOperator.Asc
+                : OrderOperator.Desc;
         }
 
         return hasSort ? sort : null;
     }
 
+
     private static Filter? BuildDynamicFilters<T>(NameValueCollection nvc)
     {
-
-        Filter? filter = null;
         PropertyInfo[] properties = typeof(T).GetProperties();
-        List<string> allKeys = nvc.AllKeys.Where(w => !ExtractFilters.Contains(w) && w != null).ToList() as List<string>;
+
+        List<string> allKeys = nvc.AllKeys
+            .Where(w => !ExtractFilters.Contains(w) && !string.IsNullOrWhiteSpace(w) && !string.IsNullOrWhiteSpace(nvc[w]))
+            .ToList()!;
+
+        Filter? rootFilter = null;
 
         foreach (string key in allKeys)
         {
-            var maybeExists = key.Contains('.');
-            PropertyInfo? propertyInfo = properties.FirstOrDefault((w) => w.Name == key);
 
+            string value = nvc[key]!;
+            bool isTranslation = key.StartsWith("Translations.", StringComparison.OrdinalIgnoreCase);
+            Filter newFilter;
 
-            if (maybeExists)
+            if (isTranslation)
             {
-                if (key.StartsWith("Translations.", StringComparison.OrdinalIgnoreCase))
+                var field = key.Split('.')[1];
+                var langCode = Thread.CurrentThread.CurrentCulture.Name;
+                var raw = $"Translations.Any(LanguageCode == \"{langCode}\" && {field}.ToLower().Contains(@value))";
+
+                newFilter = CreateSubFilters(new Filter
                 {
-                    var field = key.Split('.')[1];
-                    var langCode = Thread.CurrentThread.CurrentCulture.Name;
-                    var raw = $"Translations.Any(LanguageId == \"{langCode}\" && {field}.ToLower().Contains(@value))";
+                    Field = raw,
+                    Value = value,
+                    Operator = FilterOperator.Raw
+                });
+            }
+            else
+            {
+                var property = properties.FirstOrDefault(w => w.Name == key);
+                var op = FilterOperator.Equals;
 
-                    filter = AddOrCreateFilter(filter, new Filter
-                    {
-                        Field = raw,
-                        Value = nvc[key],
-                        Operator = FilterOperator.Raw
-                    });
+
+
+                if (property == null)
+                {
+                    newFilter = CreateSubFilters(Filter.Create(key, op, value));
                 }
+                else
+                {
+                    Type propType = property.PropertyType;
+                    if (propType.IsNullableType())
+                        propType = Nullable.GetUnderlyingType(propType)!;
 
-                filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.Equals, nvc[key]!));
-                continue;
-            }
-            if (propertyInfo == null || string.IsNullOrEmpty(nvc[key]))
-                continue;
-
-
-
-            if (propertyInfo.PropertyType.IsEnum)
-            {
-                filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.Equals, nvc[key]!));
-                continue;
-            }
-
-            switch (Type.GetTypeCode(propertyInfo.PropertyType))
-            {
-                case TypeCode.DateTime:
+                    switch (Type.GetTypeCode(propType))
                     {
-                        filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.GreaterThanOrEqual, nvc[key]!));
-                        if (DateTime.TryParse(nvc[key], out var result3))
+                        case TypeCode.String:
+                            op = FilterOperator.Contains;
+                            break;
+                        case TypeCode.DateTime:
+                            var filters = new List<Filter>
                         {
-                            filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.LessThanOrEqual, result3.Date.AddHours(23.0).AddMinutes(59.0).AddSeconds(59.0).ToString("yyyy-MM-dd HH:mm:ss")));
-                        }
+                            Filter.Create(key, FilterOperator.GreaterThanOrEqual, value)
+                        };
 
-                        break;
-                    }
-                case TypeCode.String:
-                    filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.Contains, nvc[key]!));
-                    break;
-                default:
-                    if (propertyInfo.PropertyType.IsNullableType())
-                    {
-                        switch (Type.GetTypeCode(propertyInfo.PropertyType.GenericTypeArguments[0]))
-                        {
-                            case TypeCode.DateTime:
-                                {
-                                    filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.GreaterThanOrEqual, nvc[key]!));
-                                    if (DateTime.TryParse(nvc[key], out var result3))
-                                    {
-                                        filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.LessThanOrEqual, result3.Date.AddHours(23.0).AddMinutes(59.0).AddSeconds(59.0).ToString("yyyy-MM-dd HH:mm:ss")));
-                                    }
+                            if (DateTime.TryParse(value, out var dt))
+                            {
+                                filters.Add(Filter.Create(key, FilterOperator.LessThanOrEqual,
+                                    dt.Date.AddHours(23).AddMinutes(59).AddSeconds(59).ToString("yyyy-MM-dd HH:mm:ss")));
+                            }
 
-                                    break;
-                                }
-                            case TypeCode.String:
-                                filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.Contains, nvc[key]!));
-                                break;
-                            default:
-                                if (propertyInfo.PropertyType.IsNullableType())
-                                {
+                            foreach (var f in filters)
+                                rootFilter = AppendFilter(rootFilter, CreateSubFilters(f));
 
-                                }
-                                filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.Equals, nvc[key]!));
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        filter = AddOrCreateFilter(filter, Filter.Create(key, FilterOperator.Equals, nvc[key]!));
+                            continue;
+
+                        default:
+                            op = FilterOperator.Equals;
+                            break;
                     }
 
-                    break;
+                    newFilter = CreateSubFilters(Filter.Create(key, op, value));
+                }
             }
+
+            rootFilter = AppendFilter(rootFilter, newFilter);
         }
 
-        return filter;
-
+        return rootFilter;
     }
 
-    private static Filter AddOrCreateFilter(Filter? baseFilter, Filter assignFilter)
-    {
-        assignFilter = CreateSubFilters(assignFilter);
-        if (baseFilter == null)
-        {
-            return assignFilter;
-        }
-        if (baseFilter.Filters == null)
-        {
-            baseFilter.Filters = new List<Filter>();
-        }
-
-        baseFilter.Filters.Add(assignFilter);
-
-        return baseFilter;
-    }
 
     private static Filter CreateSubFilters(Filter filter)
     {
-        var splittedValues = filter.Value!.Split('|');
-        if (splittedValues.Length == 1)
-        {
-            filter.Logic = Logic.And;
+        var values = filter.Value!.Split('|', StringSplitOptions.RemoveEmptyEntries);
+        if (values.Length <= 1)
             return filter;
-        }
 
-        filter.Logic = Logic.Or;
-
-
-        var newFilter = new Filter()
+        var root = new Filter
         {
             Field = filter.Field,
-            Logic = Logic.Or,
             Operator = filter.Operator,
-            Value = splittedValues[0],
-            Filters = new List<Filter>(),
-        };
-
-        for (int i = 1; i < splittedValues.Length; i++)
-        {
-            newFilter.Filters.Add(new Filter
+            Logic = Logic.Or,
+            Filters = values.Select(v => new Filter
             {
                 Field = filter.Field,
-                Value = splittedValues[i],
                 Operator = filter.Operator,
-                Logic = Logic.Or,
-            });
-        }
-        return newFilter;
+                Value = v,
+                Logic = Logic.Or
+            }).ToList()
+        };
 
+        return root;
     }
+
+    private static Filter AppendFilter(Filter? root, Filter newFilter)
+    {
+        if (root == null)
+            return newFilter;
+
+        if (root.Filters == null)
+            root.Filters = new List<Filter>();
+
+        root.Logic = Logic.And;
+        root.Filters.Add(newFilter);
+        return root;
+    }
+
 
     public static IList<Filter> GetAllFilters(Filter filter)
     {
@@ -211,5 +197,4 @@ public static class CollectionToDynamicQueryExtension
     public static bool IsGenericType(this Type type, Type genericType) => type.IsGenericType && type.GetGenericTypeDefinition() == genericType;
 
     public static bool IsNullableType(this Type type) => type.IsGenericType(typeof(Nullable<>));
-
 }
