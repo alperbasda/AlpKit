@@ -31,6 +31,26 @@ where T : class, new()
         return settings;
     }
 
+    public static T AddSettings<T>(this IServiceCollection services, T settings)
+    where T : class
+    {
+        if (settings == null)
+        {
+            throw new ArgumentNullException(nameof(settings), $"Settings of type '{typeof(T)}' cannot be null.");
+        }
+
+        services.Configure<T>(opts => {
+            foreach (var prop in typeof(T).GetProperties().Where(p => p.CanRead && p.CanWrite))
+            {
+                prop.SetValue(opts, prop.GetValue(settings));
+            }
+        });
+
+        services.AddSingleton(settings);
+
+        return settings;
+    }
+
 
     /// <summary>
     /// Verilen tipten kalıtılan tüm sınıfları DI'a Scoped olarak ekler. addWithLifeCycle a değer geçilirse farklı tiplerde de ekleyebilir.

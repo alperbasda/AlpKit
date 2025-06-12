@@ -1,6 +1,4 @@
-﻿using AlpKit.Common.Models.Responses;
-using FluentValidation;
-using Microsoft.AspNetCore.Mvc;
+﻿using FluentValidation;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
@@ -31,13 +29,16 @@ public class FluentValidationAttribute<T> : Attribute, IAsyncActionFilter
 
         if (!validationResult.IsValid)
         {
-            var errorMessage = string.Join("\n", validationResult.Errors.Select(e => e.ErrorMessage));
+            var errorMessage = string.Join("<br/>", validationResult.Errors.Select(e => e.ErrorMessage));
 
-            context.Result = new ObjectResult(Response<T>.Fail(errorMessage, HttpStatusCode.BadRequest))
+            throw new Exception(errorMessage)
             {
-                StatusCode = (int)HttpStatusCode.BadRequest
+                Data =
+                {
+                    ["StatusCode"] = (int)HttpStatusCode.BadRequest,
+                    ["LogType"] = "0" // None
+                }
             };
-            return;
         }
 
         await next();

@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AlpKit.Helpers.StringHelpers;
 
@@ -84,6 +86,49 @@ public static class StrHelper
 
             returnvalue = ((BTCNO * 100) + (Q1 * 10) + Q2 == TcNo);
         }
-        return returnvalue;
+        return returnvalue; 
+    }
+
+    /// <summary>
+    /// Verilen string ifadeyi geçerli bir url e çevirir. Türkçe karakter ve boşlukları düzenler.
+    /// </summary>
+    /// <param name="text"></param>
+    /// <returns></returns>
+    public static string ToUrl(this string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+            return string.Empty;
+
+        text = text.ToLowerInvariant();
+
+        var replacements = new Dictionary<char, char>
+        {
+            ['ç'] = 'c',
+            ['ğ'] = 'g',
+            ['ı'] = 'i',
+            ['ö'] = 'o',
+            ['ş'] = 's',
+            ['ü'] = 'u'
+        };
+        var sb = new StringBuilder();
+        foreach (var ch in text)
+        {
+            sb.Append(replacements.ContainsKey(ch) ? replacements[ch] : ch);
+        }
+
+        text = sb.ToString();
+
+        text = text.Normalize(NormalizationForm.FormD);
+        var chars = text
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+            .ToArray();
+        text = new string(chars).Normalize(NormalizationForm.FormC);
+
+        text = Regex.Replace(text, @"[^a-z0-9\s-]", "");
+        text = Regex.Replace(text, @"\s+", "-");        
+        text = Regex.Replace(text, @"-+", "-");         
+        text = text.Trim('-');                          
+
+        return text;
     }
 }

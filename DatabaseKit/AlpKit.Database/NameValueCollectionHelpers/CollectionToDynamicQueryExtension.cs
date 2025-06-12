@@ -147,18 +147,20 @@ public static class CollectionToDynamicQueryExtension
         if (values.Length <= 1)
             return filter;
 
+        var first = values.First();
         var root = new Filter
         {
             Field = filter.Field,
             Operator = filter.Operator,
             Logic = Logic.Or,
-            Filters = values.Select(v => new Filter
+            Value = first,
+            Filters = [.. values.Where(w => w != first).Select(v => new Filter
             {
                 Field = filter.Field,
                 Operator = filter.Operator,
                 Value = v,
                 Logic = Logic.Or
-            }).ToList()
+            })]
         };
 
         return root;
