@@ -4,6 +4,7 @@ public class DynamicQuery : ICloneable
 {
     public Sort? Sort { get; set; }
     public Filter? Filter { get; set; }
+    public string? LanguageCode { get; set; }
 
     public DynamicQuery()
     {

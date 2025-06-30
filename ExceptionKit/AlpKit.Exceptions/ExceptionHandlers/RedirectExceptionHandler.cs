@@ -1,5 +1,4 @@
 ﻿using AlpKit.Common.Constants;
-using Azure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Newtonsoft.Json;
@@ -42,7 +41,7 @@ public class RedirectExceptionHandler(ITempDataProvider _tempDataProvider) : IEx
             var redirect = exception.Data[ExceptionDataConstans.RedirectUrlDataName] as string;
             if (string.IsNullOrEmpty(redirect))
             {
-                redirect = Context.Request.Path;
+                redirect = Context.Request.Headers["Referer"].ToString() ?? "/";
             }
             Context.Response.Redirect(redirect);
         }

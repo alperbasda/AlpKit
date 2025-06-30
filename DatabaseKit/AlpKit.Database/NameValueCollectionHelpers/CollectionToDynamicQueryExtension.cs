@@ -9,14 +9,17 @@ public static class CollectionToDynamicQueryExtension
 
     public const string SortOrderOperatorQueryStringName = "Sort.OrderOperator";
 
-    private static string[] ExtractFilters = new[] { CollectionToPageRequestExtension.PageQueryStringName, CollectionToPageRequestExtension.PageSizeQueryStringName, SortOrderOperatorQueryStringName, SortFieldQueryStringName };
+    public const string LanguageCodeFilterName = "LanguageCode";
+
+    private static string[] ExtractFilters = new[] { CollectionToPageRequestExtension.PageQueryStringName, CollectionToPageRequestExtension.PageSizeQueryStringName, SortOrderOperatorQueryStringName, SortFieldQueryStringName, LanguageCodeFilterName };
 
     public static DynamicQuery ToDynamicFilter<T>(this NameValueCollection nvc)
     {
         DynamicQuery dynamicQuery = new DynamicQuery
         {
             Sort = GetSortInfo(nvc),
-            Filter = BuildDynamicFilters<T>(nvc)
+            Filter = BuildDynamicFilters<T>(nvc),
+            LanguageCode = nvc[LanguageCodeFilterName] ?? Thread.CurrentThread.CurrentCulture.Name
         };
 
         return dynamicQuery;
@@ -35,7 +38,7 @@ public static class CollectionToDynamicQueryExtension
             if (rawField.StartsWith("Translations.", StringComparison.OrdinalIgnoreCase))
             {
                 var fieldName = rawField.Split('.')[1];
-                var langCode = Thread.CurrentThread.CurrentCulture.Name;
+                var langCode = nvc[LanguageCodeFilterName] ?? Thread.CurrentThread.CurrentCulture.Name;
 
                 sort.Field = $"Translations.First(LanguageCode == \"{langCode}\").{fieldName}";
             }
@@ -76,7 +79,7 @@ public static class CollectionToDynamicQueryExtension
             if (isTranslation)
             {
                 var field = key.Split('.')[1];
-                var langCode = Thread.CurrentThread.CurrentCulture.Name;
+                var langCode = nvc[LanguageCodeFilterName] ?? Thread.CurrentThread.CurrentCulture.Name;
                 var raw = $"Translations.Any(LanguageCode == \"{langCode}\" && {field}.ToLower().Contains(@value))";
 
                 newFilter = CreateSubFilters(new Filter

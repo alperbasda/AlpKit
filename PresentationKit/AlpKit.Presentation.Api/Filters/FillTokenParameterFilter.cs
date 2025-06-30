@@ -5,6 +5,7 @@ using AlpKit.Presentation.Api.Settings;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Primitives;
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -19,7 +20,9 @@ public class FillTokenParameterFilter : IEndpointFilter
 
         tokenParameters.IpAddress = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? " ";
         tokenParameters.UserLanguage = context.HttpContext.Request.Headers[HeaderConstants.Language].ToString() ?? AppConstants.DefaultLanguage;
-        
+
+        CultureInfo.CurrentCulture = new CultureInfo(tokenParameters.UserLanguage);
+
         if (!context.HttpContext.Request.Headers.TryGetValue(HeaderConstants.Authorization, out StringValues jwt))
             return await next(context);
 
