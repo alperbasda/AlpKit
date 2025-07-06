@@ -30,4 +30,8 @@
     <ProjectReference Include="..\..\Common\AlpKit.Common\AlpKit.Common.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Exceptions\" />
+  </ItemGroup>
+
 </Project>

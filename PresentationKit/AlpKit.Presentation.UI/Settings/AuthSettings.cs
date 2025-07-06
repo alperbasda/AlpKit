@@ -4,6 +4,8 @@ public class AuthSettings
 {
     public string LoginUrl { get; set; } = default!;
 
+    public string RefreshTokenEndpoint { get; set; } = "/auth/refresh";
+
     public string Audience { get; set; } = default!;
 
     public string Issuer { get; set; } = default!;

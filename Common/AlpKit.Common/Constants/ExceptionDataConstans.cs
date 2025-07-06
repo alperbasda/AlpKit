@@ -10,6 +10,7 @@ public class ExceptionDataConstans
     /* Exception Types */
 
     public const string NotAuthorizedTypeDataName = "NotAuthorized";
+    public const string InvalidAccessToken = "InvalidAccessToken";
 
     /* Exception Types */
 }

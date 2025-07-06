@@ -15,45 +15,81 @@ public class FillTokenParameterAttribute : Attribute, IAsyncActionFilter
     private static List<string> _clientDataKeys;
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
-        var tokenParameters = context.HttpContext.RequestServices.GetService<TokenParameters>()!;
+        var httpContext = context.HttpContext;
+        var tokenParameters = httpContext.RequestServices.GetRequiredService<TokenParameters>();
+        var authSettings = httpContext.RequestServices.GetRequiredService<AuthSettings>();
 
-        tokenParameters.IpAddress = context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? " ";
-        tokenParameters.UserLanguage = context.HttpContext.Request.Cookies[WebConstants.Language]?.ToString() ?? AppConstants.DefaultLanguage;
+        tokenParameters.IpAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? " ";
+        tokenParameters.UserLanguage = httpContext.Request.Cookies[WebConstants.Language] ?? AppConstants.DefaultLanguage;
 
-        if (!context.HttpContext.Request.Cookies.TryGetValue(WebConstants.Authorization, out string jwt))
+        if (!httpContext.Request.Cookies.TryGetValue(WebConstants.Authorization, out string? jwtRaw))
+        {
             await next();
+            return;
+        }
 
-        if (jwt.ToString().Split(' ').Length > 1)
-            jwt = jwt.ToString().Split(' ')[1];
-
+        string? jwt = ExtractBearerToken(jwtRaw);
+        if (string.IsNullOrWhiteSpace(jwt))
+        {
+            await next();
+            return;
+        }
 
         var handler = new JwtSecurityTokenHandler();
-        var token = handler.ReadJwtToken(jwt);
+
+        JwtSecurityToken? token;
+        try
+        {
+            token = handler.ReadJwtToken(jwt);
+        }
+        catch
+        {
+            await next();
+            return;
+        }
 
         if (token == null)
+        {
             await next();
+            return;
+        }
+
 
         tokenParameters.AccessToken = jwt;
 
         setClientData(context, tokenParameters);
 
-        var identity = new ClaimsIdentity(token!.Claims, "basic");
-        context.HttpContext.User = new ClaimsPrincipal(identity);
-        if (!string.IsNullOrEmpty(context.HttpContext?.User?.Identity?.Name))
-            tokenParameters.UserName = context.HttpContext.User.Identity.Name;
+        var identity = new ClaimsIdentity(token.Claims, "jwt");
+        var principal = new ClaimsPrincipal(identity);
+        httpContext.User = principal;
+
+        tokenParameters.Scopes = token.Claims
+                                .Where(c => c.Type == "scope")
+                                .Select(c => c.Value)
+                                .ToArray();
+
+        tokenParameters.UserName = principal.Identity?.Name ?? string.Empty;
 
         tokenParameters.UserId = Guid.Empty;
-        var userIdClaim = token.Claims.FirstOrDefault(w => w.Type == ClaimTypes.NameIdentifier)?.Value;
-        if (!string.IsNullOrEmpty(userIdClaim))
-            tokenParameters.UserId = Guid.Parse(userIdClaim);
 
-        tokenParameters.IsSuperUser = token.Claims.Any(w => w.Type == "scope" && w.Value == WebConstants.AdminScope);
+        var userId = token.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+        if (Guid.TryParse(userId, out var guid))
+            tokenParameters.UserId = guid;
 
-
-        context.HttpContext!.Response.HttpContext.User = new ClaimsPrincipal(identity);
+        tokenParameters.IsSuperUser = token.Claims.Any(c => c.Type == "scope" && c.Value == WebConstants.AdminScope);
 
         await next();
     }
+
+
+    private static string? ExtractBearerToken(string? jwt)
+    {
+        if (string.IsNullOrWhiteSpace(jwt)) return jwt;
+        if (jwt.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            return jwt.Substring(7);
+        return jwt;
+    }
+
 
     private void setClientData(ActionExecutingContext context, TokenParameters tokenParameters)
     {

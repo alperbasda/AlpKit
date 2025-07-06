@@ -1,11 +1,13 @@
 ﻿using AlpKit.Common.Constants;
 using AlpKit.Presentation.UI.Constants;
 using AlpKit.Presentation.UI.Settings;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Text;
 
 namespace AlpKit.Presentation.UI.ActionFilters;
@@ -28,31 +30,52 @@ public class CustomAuthorizationAttribute : Attribute, IAuthorizationFilter
 
     public void OnAuthorization(AuthorizationFilterContext context)
     {
+        var endpoint = context.ActionDescriptor.EndpointMetadata;
+        if (endpoint.OfType<AllowAnonymousAttribute>().Any())
+            return;
+
+        var httpContext = context.HttpContext;
         AuthSettings authSettings = context.HttpContext.RequestServices.GetService<AuthSettings>()!;
 
-        if (!context.HttpContext.Request.Cookies.TryGetValue(WebConstants.Authorization, out string jwt))
+
+
+        if (!httpContext.Request.Cookies.TryGetValue(WebConstants.Authorization, out string? jwt))
             throwAuthorizationException(authSettings);
 
-        if (jwt.ToString().Split(' ').Length > 1)
-            jwt = jwt.ToString().Split(' ')[1];
+        jwt = ExtractBearerToken(jwt);
 
         ValidateToken(context.HttpContext, jwt!, authSettings);
 
-        var handler = new JwtSecurityTokenHandler();
-        var token = handler.ReadJwtToken(jwt);
-        if (token == null)
-            throwAuthorizationException(authSettings);
-        if (_scopes.Any() && !token!.Claims.Where(w => w.Type == "scope").Select(w => w.Value).Any(_scopes.Contains))
-            throwAuthorizationException(authSettings);
 
+
+        if (_scopes.Any())
+        {
+            var tokenScopes = httpContext.User.Claims
+                .Where(c => c.Type == "scope")
+                .Select(c => c.Value);
+
+            if (!_scopes.Any(scope => tokenScopes.Contains(scope)))
+                throwAuthorizationException(authSettings);
+        }
+
+    }
+
+    private static string? ExtractBearerToken(string? jwt)
+    {
+        if (string.IsNullOrWhiteSpace(jwt)) return jwt;
+        if (jwt.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            return jwt.Substring(7);
+        return jwt;
     }
 
     private void throwAuthorizationException(AuthSettings authSettings)
     {
-        var ex = new Exception("Please sign in.");
-        ex.Data[ExceptionDataConstans.RedirectUrlDataName] = authSettings.LoginUrl;
+        var ex = new Exception("Token is Invalid.");
+        ex.Data[ExceptionDataConstans.RedirectUrlDataName] = authSettings.RefreshTokenEndpoint;
         ex.Data[ExceptionDataConstans.LogTypeDataName] = LogType.Warn;
-        ex.Data[ExceptionDataConstans.TypeDataName] = ExceptionDataConstans.NotAuthorizedTypeDataName;
+        ex.Data[ExceptionDataConstans.TypeDataName] = ExceptionDataConstans.InvalidAccessToken;
+        ex.Data[ExceptionDataConstans.StatusCodeDataName] = HttpStatusCode.Unauthorized;
+
         throw ex;
     }
 
@@ -60,9 +83,23 @@ public class CustomAuthorizationAttribute : Attribute, IAuthorizationFilter
     {
         try
         {
-            SetIfNullTokenValidationParametersOptions(context, authSettings);
+            if (_tokenValidationParameter == null)
+            {
+                _tokenValidationParameter = new TokenValidationParameters()
+                {
+                    ValidIssuer = authSettings!.Issuer,
+                    ValidAudience = authSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authSettings.SecurityKey)),
+                    ValidateIssuerSigningKey = true,
+                    ValidateAudience = true,
+                    ValidateIssuer = true,
+                    ValidateLifetime = true,
+                    RequireExpirationTime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            }
             var handler = new JwtSecurityTokenHandler();
-            handler.ValidateToken(token, _tokenValidationParameter, out _);
+            context.User = handler.ValidateToken(token, _tokenValidationParameter, out _);
         }
         catch (Exception e)
         {
@@ -70,29 +107,4 @@ public class CustomAuthorizationAttribute : Attribute, IAuthorizationFilter
         }
     }
 
-    private void SetIfNullTokenValidationParametersOptions(HttpContext context, AuthSettings authSettings)
-    {
-        if (_tokenValidationParameter == null)
-        {
-            _tokenValidationParameter = new TokenValidationParameters()
-            {
-                ValidIssuer = authSettings!.Issuer,
-                ValidAudience = authSettings.Audience,
-                IssuerSigningKey = CreateSecurityKey(authSettings.SecurityKey),
-                ValidateIssuerSigningKey = true,
-                ValidateAudience = true,
-                ValidateIssuer = true,
-                ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
-            };
-        }
-
-    }
-
-    private static SecurityKey CreateSecurityKey(string securityKey)
-    {
-        return new SymmetricSecurityKey(Encoding.UTF8.GetBytes(securityKey));
-    }
-
-    
 }
